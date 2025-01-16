@@ -1,5 +1,5 @@
 {
-  "name": "aprf-at",
+  "name": "playwright-demo-at",
   "version": "0.1.0",
   "engines": {
     "node": ">=19.9.0"
