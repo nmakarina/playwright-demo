@@ -1,0 +1,1 @@
+Example Playwright autotests project

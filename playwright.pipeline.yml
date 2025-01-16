@@ -1,0 +1,145 @@
+trigger: none
+parameters:
+  - name: stage
+    displayName: stage
+    type: string
+    values:
+      - http://kc-dev.aprf.parma.local
+      - https://rc-gdl.parma.tech
+      - https://demo-gdl.parma.tech
+    default: http://kc-dev.aprf.parma.local
+  - name: project
+    displayName: project
+    type: string
+    values:
+      - smoke
+      - regress
+    default: smoke
+name: $(rev:r)
+jobs:
+  - job: e2e
+    displayName: Run Playwright Tests
+    timeoutInMinutes: 40
+    pool:
+      name: AUTO-POOL
+      demands:
+        - slave -equals at-slave
+    steps:
+      - download: none
+      - checkout: self
+        clean: true
+        continueOnError: true
+
+      - task: NodeTool@0
+        displayName: 'Use Node version 20'
+        inputs:
+          versionSpec: 20.x
+
+      #- script: |
+      #    npm init playwright@latest
+      #  displayName: "Playwright Install"
+      - script: |
+          npm install
+        displayName: "NPM Install"
+
+      - script: |
+          npm ci
+        displayName: "NPM Install"
+
+      - script: |
+          npm install --global cross-env
+        displayName: "NPM Install cross-env"
+
+      - script: |
+          #cross-env URL=${{ parameters.stage }} npx playwright test --project=${{ parameters.browser }}
+          npm run e2e:${{ parameters.project }}:ci
+        displayName: "Run Playwright Tests"
+        continueOnError: true
+
+      - script: |
+          npx allure generate allure-results -o allure --clean
+        displayName: "Generate allure report"
+
+      - task: ArchiveFiles@2
+        displayName: 'Add playwright-report to Archive'
+        condition: succeededOrFailed()
+        inputs:
+          rootFolderOrFile: '$(Pipeline.Workspace)/s/playwright-report/'
+          archiveFile: '$(Agent.TempDirectory)/$(Build.BuildId)_$(System.JobAttempt)$(System.StageAttempt).zip'
+
+      - task: ArchiveFiles@2
+        displayName: 'Add test-results to Archive'
+        condition: succeededOrFailed()
+        inputs:
+          rootFolderOrFile: '$(Pipeline.Workspace)/s/test-results/'
+          archiveFile: '$(Agent.TempDirectory)/$(Build.BuildId)_$(System.JobAttempt)$(System.StageAttempt).zip'
+          replaceExistingArchive: false
+      - task: CopyFiles@2
+        displayName: get history from inetpub
+        condition: succeededOrFailed()
+        inputs:
+          SourceFolder: C:\inetpub\wwwroot\at\e2e\history
+          Contents: '**/*.*'
+          TargetFolder: $(Pipeline.Workspace)/s/allure/history
+      - task: CopyFiles@2
+        displayName: 'Copy Files to: inetpub'
+        condition: succeededOrFailed()
+        inputs:
+          SourceFolder: $(Pipeline.Workspace)/s/allure
+          #playwright-report/
+          Contents: '**/*.*'
+          TargetFolder: C:\inetpub\wwwroot\at\e2e\allure\$(Build.BuildNumber)
+          CleanTargetFolder: true
+      - task: CopyFiles@2
+        displayName: 'Copy Files to: history'
+        condition: succeededOrFailed()
+        inputs:
+          SourceFolder: C:\inetpub\wwwroot\at\e2e\allure\$(Build.BuildNumber)\history
+          Contents: '**/*.*'
+          TargetFolder: C:\inetpub\wwwroot\at\e2e\history
+          CleanTargetFolder: true
+      - task: CopyFiles@2
+        displayName: 'Copy Files to: inetpub'
+        condition: succeededOrFailed()
+        inputs:
+          SourceFolder: $(Pipeline.Workspace)/s/playwright-report/
+          Contents: '**/*.*'
+          TargetFolder: C:\inetpub\wwwroot\at\e2e\$(Build.BuildNumber)
+          CleanTargetFolder: true
+      - task: PublishBuildArtifacts@1
+        displayName: 'Publish Artifact: drop'
+        condition: succeededOrFailed()
+        inputs:
+         PathtoPublish: $(build.artifactstagingdirectory)
+
+      - task: PublishTestResults@2
+        condition: succeededOrFailed()
+        inputs:
+          testResultsFormat: 'JUnit'
+          testResultsFiles: '$(Pipeline.Workspace)/s/results.xml'
+          testRunTitle: 'Playwright tests - (${{ parameters.stage }})'
+        displayName: 'Publish Test Results'
+
+      - task: SendEmail@1
+        displayName: Send test's result
+        condition: succeededOrFailed()
+        enabled: True
+        inputs:
+          To: petya.g@mail.com
+          CC: ivan.n@mail.com
+          From: at-mail@mail.com
+          Subject: Test's result (${{ parameters.stage }})
+          Body: >-
+            Результаты выполнения автоматических тестов
+            https://tfs.xxxxxxx/_build/results?buildId=$(Build.BuildId)&view=results
+
+            Allure-отчет
+            http://10.XX.XX.XX/at/e2e/allure/$(Build.BuildNumber)/
+
+            HTML-отчет
+            http://10.XX.XX.XX/at/e2e/$(Build.BuildNumber)/
+          SmtpServer: mail.xxxxxxxx.ru
+          SmtpUsername: at-mail
+          SmtpPassword: xxxxxxxxx
+          UseSSL: false
+...

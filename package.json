@@ -1,0 +1,31 @@
+{
+  "name": "aprf-at",
+  "version": "0.1.0",
+  "engines": {
+    "node": ">=19.9.0"
+  },
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "e2e:install": "npx playwright install",
+    "e2e:local:ui": "cross-env URL=http://localhost:3000 npx playwright test --ui",
+    "e2e:local:ci": "cross-env URL=http://localhost:3000 npx playwright test",
+    "e2e:smoke:ui": "cross-env URL=https://github.com npx playwright test --ui",
+    "e2e:smoke:ci": "cross-env URL=https://github.com npx playwright test",
+    "e2e:dev:record": "npx playwright codegen https://github.com"
+  },
+  "dependencies": {
+    "antd": "5.18.3",
+    "classnames": "2.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.45.1",
+    "@types/node": "22.10.5",
+    "allure-commandline": "2.30.0",
+    "allure-playwright": "3.0.1",
+    "cross-env": "7.0.3",
+    "husky": "7.0.4",
+    "swagger-typescript-api": "13.0.3",
+    "typescript": "5.1.6"
+  }
+}
