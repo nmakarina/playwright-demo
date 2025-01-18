@@ -1,6 +1,7 @@
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { LoginPage } from "./pages/login-page.ts";
 import { MainPage } from "./pages/main-page.ts";
+import { RepoPage } from "./pages/repo-page.ts";
 
 const loginUser = process.env.TEST_LOGIN;
 const passUser = process.env.TEST_PASSWORD;
@@ -12,17 +13,29 @@ test.beforeEach(async ({ page }) => {
     }
     const loginPage = new LoginPage(page);
     await loginPage.login(loginUser, passUser, page);
-    //await page.waitForTimeout(2000);
   })
 });
 
-test("Authentication. Viewing the main page. TEST CASE 0001", async ({ page, context }) => {
+test("Authentication. Viewing the main page. TEST CASE 0001", async ({ page }) => {
   const mainPage = new MainPage(page);
   await mainPage.checkMainElementsOfPage(page, test);
-  await page.waitForTimeout(2000);
-
 });
 
+
+test("Export. TEST CASE 0002", async ({ page }) => {
+  const mainPage = new MainPage(page);
+  await mainPage.repoLink.first().click();
+  const repoPage = new RepoPage(page);
+  await repoPage.btnCode.click();
+  const downloadPromise = page.waitForEvent("download");
+  await repoPage.btnDownload.click();
+  const download = await downloadPromise;
+  const fileName = download.suggestedFilename();
+  //await download.saveAs('e2e/download/'+fileName)
+  expect(fileName.includes(".zip"), "Имя скаченного файла не соответствует ожидаемому! (" + fileName + ")")
+  .toBeTruthy();
+
+});
 
 test.afterEach(async ({ page }, testInfo) => {
   const screenshot = await page.screenshot();
