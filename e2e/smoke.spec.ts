@@ -1,28 +1,16 @@
-import { expect, test } from "@playwright/test";
-import { LoginPage } from "./pages/login-page.ts";
-import { MainPage } from "./pages/main-page.ts";
+//import { expect, test } from "@playwright/test";
 import { RepoPage } from "./pages/repo-page.ts";
+import { test, expect } from './fixtures/test-fixture.ts';
+import { MainPage } from "./pages/main-page.ts";
 
-const loginUser = process.env.TEST_LOGIN;
-const passUser = process.env.TEST_PASSWORD;
-
-test.beforeEach(async ({ page }) => {
-  await test.step("Authentication", async () => {
-    if (!loginUser || !passUser) {
-      throw Error(`Provide "TEST_LOGIN" and "TEST_PASSWORD" inside .env`);
-    }
-    const loginPage = new LoginPage(page);
-    await loginPage.login(loginUser, passUser, page);
-  })
-});
 
 test("Authentication. Viewing the main page. TEST CASE 0001", async ({ page }) => {
   const mainPage = new MainPage(page);
-  await mainPage.checkMainElementsOfPage(page, test);
+  await mainPage.checkMainElementsOfPage();
 });
 
 
-test("Export. TEST CASE 0002",
+test("Export repo zip-file. TEST CASE 0002",
   { annotation: { type: "BUG", description: "<bug link>" } },
   async ({ page }) => {
     const mainPage = new MainPage(page);
@@ -32,19 +20,8 @@ test("Export. TEST CASE 0002",
     const repoPage = new RepoPage(page);
     await test.step(`Downloading ZIP`, async () => {
       await repoPage.btnCode.click();
-      const downloadPromise = page.waitForEvent("download");
-      await repoPage.btnDownload.click();
-      const download = await downloadPromise;
-      const fileName = download.suggestedFilename();
-      //await download.saveAs('e2e/download/'+fileName)
-      expect(fileName.includes(".zip"), "File name is (" + fileName + ")")
-        .toBeTruthy();
-    });
-
+      await repoPage.verifyDownloadFile(repoPage.btnDownload, ".zip");
+    })
   });
 
-test.afterEach(async ({ page }, testInfo) => {
-  const screenshot = await page.screenshot();
-  await testInfo.attach("screenshot", { body: screenshot, contentType: "image/png" });
-});
 

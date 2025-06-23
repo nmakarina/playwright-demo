@@ -16,15 +16,10 @@ export class LoginPage extends BasePage {
   }
 
 
-  async login(login: string, password: string, page: Page): Promise<void> {
-    await page.goto("/");
-    const pageUrl = page.url();
-    const urlObject = new URL(pageUrl);
-    if (urlObject.hostname !== "localhost") {
-      await page.goto("/login");
-      await this.inputLogin.fill(login);
-      await this.inputPassword.fill(password);
-      await this.btnAuth.click();
-    }
+  async login(login: string, password: string): Promise<void> {
+    await this.page.goto("/login");
+    await this.inputLogin.fill(login);
+    await this.inputPassword.fill(password);
+    await this.btnAuth.click();
   }
 }

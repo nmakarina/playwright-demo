@@ -4,10 +4,8 @@ parameters:
     displayName: stage
     type: string
     values:
-      - http://kc-dev.aprf.parma.local
-      - https://rc-gdl.parma.tech
-      - https://demo-gdl.parma.tech
-    default: http://kc-dev.aprf.parma.local
+      - https://github.com
+    default: https://github.com
   - name: project
     displayName: project
     type: string
@@ -29,44 +27,32 @@ jobs:
       - checkout: self
         clean: true
         continueOnError: true
-
       - task: NodeTool@0
         displayName: 'Use Node version 20'
         inputs:
           versionSpec: 20.x
-
-      #- script: |
-      #    npm init playwright@latest
-      #  displayName: "Playwright Install"
       - script: |
           npm install
         displayName: "NPM Install"
-
       - script: |
           npm ci
         displayName: "NPM Install"
-
       - script: |
           npm install --global cross-env
         displayName: "NPM Install cross-env"
-
       - script: |
-          #cross-env URL=${{ parameters.stage }} npx playwright test --project=${{ parameters.browser }}
           npm run e2e:${{ parameters.project }}:ci
         displayName: "Run Playwright Tests"
         continueOnError: true
-
       - script: |
           npx allure generate allure-results -o allure --clean
         displayName: "Generate allure report"
-
       - task: ArchiveFiles@2
         displayName: 'Add playwright-report to Archive'
         condition: succeededOrFailed()
         inputs:
           rootFolderOrFile: '$(Pipeline.Workspace)/s/playwright-report/'
           archiveFile: '$(Agent.TempDirectory)/$(Build.BuildId)_$(System.JobAttempt)$(System.StageAttempt).zip'
-
       - task: ArchiveFiles@2
         displayName: 'Add test-results to Archive'
         condition: succeededOrFailed()
@@ -132,10 +118,8 @@ jobs:
           Body: >-
             Результаты выполнения автоматических тестов
             https://tfs.xxxxxxx/_build/results?buildId=$(Build.BuildId)&view=results
-
             Allure-отчет
             http://10.XX.XX.XX/at/e2e/allure/$(Build.BuildNumber)/
-
             HTML-отчет
             http://10.XX.XX.XX/at/e2e/$(Build.BuildNumber)/
           SmtpServer: mail.xxxxxxxx.ru

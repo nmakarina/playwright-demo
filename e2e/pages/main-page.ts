@@ -1,4 +1,4 @@
-import { expect, Locator, Page } from "@playwright/test";
+import { expect, Locator, Page, test } from "@playwright/test";
 import { BasePage } from "./base-page.ts";
 
 export class MainPage extends BasePage {
@@ -12,7 +12,7 @@ export class MainPage extends BasePage {
     this.repoLink = page.locator("//a[@data-hovercard-type='repository']");
   }
 
-  async checkMainElementsOfPage(page, test): Promise<void> {
+  async checkMainElementsOfPage(): Promise<void> {
     await test.step("Verifying main elements of Main Page", async() => {
       await expect.soft(this.labelTopRepo, "label 'Top repositories' is visibled").toBeVisible();
       //Here you can verify any elements that you want to verify :)
